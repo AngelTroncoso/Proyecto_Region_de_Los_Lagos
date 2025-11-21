@@ -116,6 +116,13 @@ def extract_text_from_content(content):
              continue
     return text_content
 
+# Función para reiniciar el estado de la sesión
+def reset_session_state():
+    keys_to_delete = ['chat', 'rango_min', 'rango_max', 'stock_actual', 'deficit']
+    for key in keys_to_delete:
+        if key in st.session_state:
+            del st.session_state[key]
+    st.rerun()
 
 # --- INICIO DE LA INTERFAZ STREAMLIT ---
 st.title("🤖 Agente Gestor de Insumos")
@@ -144,6 +151,12 @@ if "chat" not in st.session_state:
 
 with st.sidebar:
     st.header("⚙️ Configuración del Agente")
+    
+    # NUEVO BOTÓN PARA FORZAR EL REINICIO
+    if st.button("🔄 Reiniciar Conversación y Datos", use_container_width=True):
+        reset_session_state()
+
+    st.markdown("---")
     st.markdown("**Modelo:** `gemini-2.5-flash`")
     st.markdown("**Sistema:** Gestión de Compras Médicas")
     
@@ -207,9 +220,7 @@ for message in history:
         display_messages.append(message)
 
 
-# Renderizar SOLO los últimos 6 mensajes limpios (esto asegura ver la interacción reciente)
-# Ajusta este número (ej: display_messages[-4:] si quieres solo las dos últimas interacciones)
-# Usaremos [-6:] para dar un poco más de contexto.
+# Renderizar SOLO los últimos 6 mensajes limpios (para ocultar el historial antiguo y ruidoso)
 for message in display_messages[-6:]: 
     message_text = extract_text_from_content(message)
     
