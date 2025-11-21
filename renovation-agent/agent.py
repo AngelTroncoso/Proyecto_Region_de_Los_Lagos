@@ -197,7 +197,7 @@ st.markdown("---") # Separador visual
 for message in st.session_state.chat.get_history():
     message_text = extract_text_from_content(message)
     
-    if message_text:
+    if message_text.strip():
         role = "user" if message.role == "user" else "assistant"
         with st.chat_message(role):
             st.markdown(message_text)
