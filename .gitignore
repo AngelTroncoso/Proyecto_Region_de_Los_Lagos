@@ -1,0 +1,17 @@
+# Archivos y carpetas que Git debe ignorar
+# ----------------------------------------
+
+# 1. Entorno Virtual de Python (¡CRÍTICO!)
+.venv/
+venv/
+env/
+
+# 2. Archivos de Clave API (SEGURIDAD)
+.env
+
+# 3. Archivos de Caché de Python
+__pycache__/
+*.pyc
+
+# 4. Caché de Streamlit
+.streamlit/
