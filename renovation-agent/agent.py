@@ -118,20 +118,31 @@ if "chat" not in st.session_state:
         # Detenemos la ejecución de Streamlit si hay un error crítico
         st.stop() 
 
-
 # ===========================================================
-# Función de Ayuda para Extraer Texto de forma Segura
+# Función de Ayuda para Extraer Texto de forma Segura (CORREGIDA)
 # ===========================================================
 def extract_text_from_content(content):
     """Extrae y concatena el texto de todas las partes de un objeto Content de Gemini."""
     text_content = ""
+    
+    # 1. Aseguramos que 'parts' exista
+    if not hasattr(content, 'parts'):
+        return ""
+
     for part in content.parts:
-        # Usamos hasattr para verificar si la parte es de texto y no de herramienta u otro tipo
+        # 2. Manejamos explícitamente el tipo de parte que contiene texto
         if hasattr(part, 'text'):
             text_content += part.text
-        # Puedes añadir aquí lógica adicional si quieres mostrar llamadas a herramientas
-        # o salidas, pero para texto simple, esto es suficiente.
+        
+        # 3. Ignoramos explícitamente las partes relacionadas con herramientas
+        # Esto evita que el código intente acceder a 'text' en una ToolCall o FunctionResponse
+        elif hasattr(part, 'function_call') or hasattr(part, 'function_response'):
+             # Opcional: Aquí podrías añadir lógica para mostrar la llamada a la herramienta
+             # print(f"DEBUG: Parte ignorada (Llamada a Herramienta)") 
+             continue # Simplemente ignoramos este tipo de parte para la visualización de texto
+             
     return text_content
+
 
 # ===========================================================
 # Mostrar el historial de mensajes
