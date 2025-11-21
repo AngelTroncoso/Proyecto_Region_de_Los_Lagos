@@ -118,15 +118,38 @@ if "chat" not in st.session_state:
         # Detenemos la ejecución de Streamlit si hay un error crítico
         st.stop() 
 
-# Mostrar el historial de mensajes
-# Streamlit se ejecuta de arriba a abajo en cada interacción.
-for message in st.session_state.chat.get_history():
-    # Mapeamos el rol del modelo a 'assistant' para Streamlit
-    role = "user" if message.role == "user" else "assistant"
-    with st.chat_message(role):
-        st.markdown(message.text)
 
+# ===========================================================
+# Función de Ayuda para Extraer Texto de forma Segura
+# ===========================================================
+def extract_text_from_content(content):
+    """Extrae y concatena el texto de todas las partes de un objeto Content de Gemini."""
+    text_content = ""
+    for part in content.parts:
+        # Usamos hasattr para verificar si la parte es de texto y no de herramienta u otro tipo
+        if hasattr(part, 'text'):
+            text_content += part.text
+        # Puedes añadir aquí lógica adicional si quieres mostrar llamadas a herramientas
+        # o salidas, pero para texto simple, esto es suficiente.
+    return text_content
+
+# ===========================================================
+# Mostrar el historial de mensajes
+# ===========================================================
+for message in st.session_state.chat.get_history():
+    # 1. Extraemos el texto de forma segura
+    message_text = extract_text_from_content(message)
+    
+    # Solo mostramos el mensaje si contiene texto (para evitar mostrar mensajes vacíos)
+    if message_text:
+        # 2. Mapeamos el rol del modelo a 'assistant' para Streamlit
+        role = "user" if message.role == "user" else "assistant"
+        with st.chat_message(role):
+            st.markdown(message_text)
+
+# ===========================================================
 # Capturar la entrada del usuario con la interfaz de Streamlit
+# ===========================================================
 if prompt := st.chat_input("Escribe tu solicitud aquí..."):
     # 1. Muestra el mensaje del usuario
     with st.chat_message("user"):
@@ -139,14 +162,14 @@ if prompt := st.chat_input("Escribe tu solicitud aquí..."):
             response = st.session_state.chat.send_message(prompt)
         except Exception as e:
             st.error(f"Error al enviar mensaje al modelo: {e}")
+            # Creamos una respuesta de error para mantener la estructura del chat
             response = types.Content(parts=[types.Part.from_text("Error al procesar la solicitud.")])
 
     # 3. Mostrar la respuesta final del agente
     with st.chat_message("assistant"):
-        # Usamos st.markdown para renderizar texto de forma segura y legible
-        st.markdown(response.text)
+        # Usamos la función segura para extraer la respuesta
+        final_response_text = extract_text_from_content(response)
+        st.markdown(final_response_text)
         
-    # El comando st.rerun() ya no es necesario en versiones recientes
-    # de Streamlit para actualizar la interfaz al usar st.chat_input.
-
+    # La interfaz se actualiza automáticamente
  
