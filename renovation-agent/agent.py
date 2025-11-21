@@ -193,14 +193,30 @@ st.markdown("---") # Separador visual
 # CHAT INTERFAZ
 # -------------------------------------------------------------------------------------
 
-# 1. Mostrar el historial de mensajes
-for message in st.session_state.chat.get_history():
+# 1. Mostrar el historial de mensajes (SOLUCIÓN FINAL Y ROBUSTA)
+
+# Obtenemos el historial completo.
+history = st.session_state.chat.get_history()
+display_messages = []
+
+for message in history:
     message_text = extract_text_from_content(message)
     
+    # Condición robusta: Solo guardar si tiene texto sustancial Y el rol es 'user' o 'model'
     if message_text.strip() and message.role in ["user", "model"]:
-        role = "user" if message.role == "user" else "assistant"
-        with st.chat_message(role):
-            st.markdown(message_text)
+        display_messages.append(message)
+
+
+# Renderizar SOLO los últimos 6 mensajes limpios (esto asegura ver la interacción reciente)
+# Ajusta este número (ej: display_messages[-4:] si quieres solo las dos últimas interacciones)
+# Usaremos [-6:] para dar un poco más de contexto.
+for message in display_messages[-6:]: 
+    message_text = extract_text_from_content(message)
+    
+    role = "user" if message.role == "user" else "assistant"
+    with st.chat_message(role):
+        st.markdown(message_text)
+
 
 # 2. Capturar la entrada del usuario
 if prompt := st.chat_input("Escribe tu solicitud aquí, ej: 'Evalúa la necesidad de comprar suturas quirúrgicas.'"):
