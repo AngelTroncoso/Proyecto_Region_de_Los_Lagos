@@ -119,27 +119,24 @@ if "chat" not in st.session_state:
         st.stop() 
 
 # ===========================================================
-# Función de Ayuda para Extraer Texto de forma Segura (CORREGIDA)
+# Función de Ayuda para Extraer Texto de forma Segura (CORRECCIÓN FINAL)
 # ===========================================================
 def extract_text_from_content(content):
     """Extrae y concatena el texto de todas las partes de un objeto Content de Gemini."""
     text_content = ""
     
-    # 1. Aseguramos que 'parts' exista
     if not hasattr(content, 'parts'):
         return ""
 
     for part in content.parts:
-        # 2. Manejamos explícitamente el tipo de parte que contiene texto
+        # 1. Chequeamos que la parte tenga texto
         if hasattr(part, 'text'):
-            text_content += part.text
+            # 2. CONVERTIMOS EL VALOR EXPLÍCITAMENTE A CADENA para prevenir TypeError
+            text_content += str(part.text)
         
-        # 3. Ignoramos explícitamente las partes relacionadas con herramientas
-        # Esto evita que el código intente acceder a 'text' en una ToolCall o FunctionResponse
+        # 3. Opcional: Ignoramos las partes de herramientas (llamadas/respuestas)
         elif hasattr(part, 'function_call') or hasattr(part, 'function_response'):
-             # Opcional: Aquí podrías añadir lógica para mostrar la llamada a la herramienta
-             # print(f"DEBUG: Parte ignorada (Llamada a Herramienta)") 
-             continue # Simplemente ignoramos este tipo de parte para la visualización de texto
+             continue
              
     return text_content
 
