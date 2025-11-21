@@ -1,31 +1,41 @@
 # ===========================================================
-# 1. Configuración del Entorno
+# 1. Configuración del Entorno (CORREGIDO PARA STREAMLIT)
 # ===========================================================
 import os
 import sys
 import requests
-from getpass import getpass
-from dotenv import load_dotenv
+import streamlit as st # 💡 AÑADIR STREAMLIT
+# from getpass import getpass # ❌ ELIMINAR getpass
+# from dotenv import load_dotenv # ❌ ELIMINAR dotenv
 
 # Se importan las librerías del SDK de Google
 from google import genai
 from google.genai import types
 
-# Cargar variables del archivo .env
-load_dotenv()
-
 print("🎉 Iniciando ejecución del Agente Gestor de Insumos...")
 
-# Configurar credenciales
-api_key = os.environ.get("GOOGLE_API_KEY")
+# Configurar credenciales USANDO ST.SECRETS
+try:
+    # Intenta cargar la clave desde la configuración de Streamlit Secrets
+    api_key = st.secrets["GEMINI_API_KEY"]
+    print("✅ API Key cargada desde st.secrets")
+except KeyError:
+    # Si la clave no está, termina la ejecución con un error claro
+    st.error("❌ Error: Clave 'GEMINI_API_KEY' no encontrada en Streamlit Secrets.")
+    print("❌ ERROR: Clave GEMINI_API_KEY no encontrada.")
+    sys.exit(1)
 
-if not api_key:
-    print("\n⚠️ No encontré la clave en el archivo .env")
-    api_key = getpass("API Key: ")
-    os.environ['GOOGLE_API_KEY'] = api_key
-else:
-    print("✅ API Key cargada automáticamente")
+# Inicializar cliente
+try:
+    # Ahora la inicialización usa la clave cargada de forma segura
+    client = genai.Client(api_key=api_key, http_options={'api_version': 'v1beta'})
+except Exception as e:
+    print(f"❌ Error al inicializar el cliente Gemini: {e}")
+    sys.exit(1)
 
+
+# --- Definición de URLs de Gist (el resto de esta sección se mantiene) ---
+# ...
 # Inicializar cliente
 try:
     client = genai.Client(api_key=api_key, http_options={'api_version': 'v1beta'})
