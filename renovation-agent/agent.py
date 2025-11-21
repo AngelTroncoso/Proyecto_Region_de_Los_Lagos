@@ -83,7 +83,7 @@ def Verificacion_Stock_Actual(rango_consumo: str) -> str:
 
 
 # ===========================================================
-# 3. Definición y Ejecución del Agente (MODO INTERACTIVO)
+# 3. Definición y Ejecución del Agente (MODO STREAMLIT)
 # ===========================================================
 
 SYSTEM_PROMPT = """
@@ -99,36 +99,54 @@ configuracion = types.GenerateContentConfig(
     tools=[Insumos_Historicos_Tool, Verificacion_Stock_Actual]
 )
 
-try:
-    # 1. Crear el Chat del Agente (Se crea SÓLO una vez para mantener el historial)
-    print("\n🚀 Creando chat con Gemini 2.5 Flash...")
-    
-    chat = client.chats.create(
-        model="gemini-2.5-flash",
-        config=configuracion
-    )
+# --- INICIO DE LA INTERFAZ STREAMLIT ---
+st.title("🤖 Agente Gestor de Insumos")
 
-    print("\n---------------------------------------------------")
-    print("🤖 Agente Gestor de Insumos (Modo Interactivo)")
-    print("   Escribe 'salir' o 'exit' para terminar.")
-    print("---------------------------------------------------")
 
-    # 2. Bucle de conversación continuo
-    while True:
-        # Pide input al usuario
-        user_input = input("\n👤 Tú: ")
+# Inicialización del Chat en el Estado de Sesión de Streamlit
+# Usamos st.session_state para que el objeto 'chat' persista entre interacciones.
+if "chat" not in st.session_state:
+    try:
+        # 1. Crear el Chat del Agente (Se crea SÓLO una vez al inicio)
+        print("\n🚀 Creando chat con Gemini 2.5 Flash...")
+        st.session_state.chat = client.chats.create(
+            model="gemini-2.5-flash",
+            config=configuracion
+        )
+    except Exception as e:
+        st.error(f"❌ Error al crear el chat: {e}")
+        # Detenemos la ejecución de Streamlit si hay un error crítico
+        st.stop() 
+
+# Mostrar el historial de mensajes
+# Streamlit se ejecuta de arriba a abajo en cada interacción.
+for message in st.session_state.chat.get_history():
+    # Mapeamos el rol del modelo a 'assistant' para Streamlit
+    role = "user" if message.role == "user" else "assistant"
+    with st.chat_message(role):
+        st.markdown(message.text)
+
+# Capturar la entrada del usuario con la interfaz de Streamlit
+if prompt := st.chat_input("Escribe tu solicitud aquí..."):
+    # 1. Muestra el mensaje del usuario
+    with st.chat_message("user"):
+        st.markdown(prompt)
+
+    # 2. Ejecutar el flujo del agente (Llamada al modelo)
+    with st.spinner("... El Agente está procesando y llamando herramientas..."):
+        try:
+            # Enviamos el mensaje al chat persistente
+            response = st.session_state.chat.send_message(prompt)
+        except Exception as e:
+            st.error(f"Error al enviar mensaje al modelo: {e}")
+            response = types.Content(parts=[types.Part.from_text("Error al procesar la solicitud.")])
+
+    # 3. Mostrar la respuesta final del agente
+    with st.chat_message("assistant"):
+        # Usamos st.markdown para renderizar texto de forma segura y legible
+        st.markdown(response.text)
         
-        # Condición de salida
-        if user_input.lower() in ["salir", "exit", "quit"]:
-            print("\n👋 Agente desconectado. ¡Hasta pronto!")
-            break
-        
-        # Ejecutar el flujo del agente
-        print("\n... El Agente está procesando y llamando herramientas...")
-        response = chat.send_message(user_input)
+    # El comando st.rerun() ya no es necesario en versiones recientes
+    # de Streamlit para actualizar la interfaz al usar st.chat_input.
 
-        # Mostrar la respuesta final
-        print("\n✨ Agente:", response.text)
-
-except Exception as e:
-    print(f"\n❌ Error: {e}")
+ 
